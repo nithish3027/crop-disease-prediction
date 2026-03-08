@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CropAssist — AI Crop Disease Assistant</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("service-worker.js")
+      .then(() => console.log("✅ Service Worker registered"))
+      .catch(err => console.error("SW registration failed:", err));
+  }
+  </script>
+  <meta name="theme-color" content="#166534">
+
+  <!-- PDF libs (used on fertilizer page) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-left">
+      <a href="index.html" class="brand">
+        <img src="icons/icon-512.png" alt="CropAssist logo" width="36" height="36" />
+        <div class="brand-text">
+          <span id="brandTitle" data-i18n="brandTitle">CropAssist</span>
+          <small id="brandSubtitle" data-i18n="brandSubtitle">AI Crop Disease Assistant</small>
+        </div>
+      </a>
+    </div>
+
+    <div class="nav-center">
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="fertilizer.html" class="nav-link">Fertilizer</a>
+      <a href="tools.html" class="nav-link">Tools</a>
+      <a href="alerts.html" class="nav-link">Alerts</a>
+      <a href="planning.html" class="nav-link">Planning</a>
+      <a href="contact.html" class="nav-link">Contact</a>
+    </div>
+
+    <div class="nav-right">
+
+        <div class="lang-wrapper">
+          <span class="lang-label">Translate </span>
+          <div id="google_translate_element"></div>
+        </div>
+      <button id="themeToggle" class="icon-btn" title="Toggle theme">☀️</button>
+    </div>
+  </nav>
+
+  <!-- Analyzer Modal -->
+  <div id="analyzerModal" class="modal" aria-hidden="true">
+    <div class="modal-inner" role="dialog" aria-modal="true" aria-label="Analyzer">
+      <header class="modal-head">
+        <div class="modal-title">🌿 Leaf Disease Analyzer</div>
+        <button id="closeAnalyzer" class="icon-btn">✕</button>
+      </header>
+      <div class="modal-body">
+        <iframe
+          id="analyzerFrame"
+          title="Crop Guard Analyzer"
+          src=""
+          frameborder="0"
+          allow="camera;microphone"
+          sandbox="allow-forms allow-scripts allow-same-origin allow-modals"
+        ></iframe>
+        <div id="analyzerLoader" class="loader">
+          <p>🧠 Warming up AI model... please wait</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-inner">
+      <h1 id="heroTitle" data-i18n="heroTitle">Detect Crop and Diseases Early</h1>
+      <p id="heroSub" data-i18n="heroSub">Upload a leaf image and get instant predictions with remedies and seasonal guidance.</p>
+      <div class="hero-actions">
+        <button id="heroAnalyze" class="btn primary" src="https://huggingface.co/spaces/Prasannatesla/Crop_Guard_ResNet50_V2">🔍 Analyze Leaf</button>
+        <a href="fertilizer.html" class="btn outline">Fertilizer Recommendation</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Smart Farming Modules -->
+  <main class="container">
+    <section class="modules" id="modules">
+      <a href="fertilizer.html" class="card link-card fade-up">
+        <div class="card-head">💧 Fertilizer Recommendation</div>
+        <p>Interactive fertilizer suggestions and a downloadable bilingual PDF report.</p>
+      </a>
+
+      <a href="tools.html" class="card link-card fade-up">
+        <div class="card-head">⚙️ Tools Guide</div>
+        <p>Maintenance and safety tips for manual & powered farm tools.</p>
+      </a>
+
+      <a href="alerts.html" class="card link-card fade-up">
+        <div class="card-head">📢 Advisory Alerts</div>
+        <p>Weather cautions, subsidy notices and soil-health tips.</p>
+      </a>
+
+      <a href="planning.html" class="card link-card fade-up">
+        <div class="card-head">📆 Crop Planning</div>
+        <p>Local sowing/harvest windows and a quick seasonal planner.</p>
+      </a>
+
+      <a href="contact.html" class="card link-card fade-up">
+        <div class="card-head">☎️ Contact & Support</div>
+        <p>Helplines, email and WhatsApp contact for farmer support.</p>
+      </a>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong id="footerBrand" data-i18n="footerBrand">CropAssist</strong>
+        <p id="footerText" data-i18n="footerText">AI-powered disease detection and farmer guidance.</p>
+      </div>
+      <div class="footer-links">
+        <a href="fertilizer.html">Fertilizer</a>
+        <a href="tools.html">Tools</a>
+        <a href="alerts.html">Alerts</a>
+      </div>
+    </div>
+    <div class="copyright">© 2025 CropAssist</div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+  <script>
+    const spaceUrl = "https://prasannatesla-crop-guard-resnet50-v2.hf.space/?__theme=system";
+    const modal = document.getElementById("analyzerModal");
+    const frame = document.getElementById("analyzerFrame");
+    const loader = document.getElementById("analyzerLoader");
+
+    function openAnalyzer() {
+      loader.style.display = "block";
+      frame.src = spaceUrl;
+
+      modal.setAttribute("aria-hidden", "false");
+      modal.classList.add("show");
+
+      // Wait a few seconds for Space to wake up
+      setTimeout(() => {
+        loader.style.display = "none";
+      }, 5000);
+    }
+
+    function closeAnalyzer() {
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+      frame.src = ""; // unload iframe when closed
+    }
+
+    document.getElementById("openAnalyzer").addEventListener("click", openAnalyzer);
+    document.getElementById("heroAnalyze").addEventListener("click", openAnalyzer);
+    document.getElementById("closeAnalyzer").addEventListener("click", closeAnalyzer);
+  </script>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement(
+    {
+      pageLanguage: 'en',
+      includedLanguages: 'en,ta,hi,bn,te,ml,mr,kn,ur,pa,gu,or,as,ne,si,fr,de,es,ar,zh-CN,ja,ru',
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+    },
+    'google_translate_element'
+  );
+}
+</script>
+
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>
